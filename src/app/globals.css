@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --background: #08090b;
+  --background-elevated: #0c0d10;
+  --foreground: #f5f5f5;
+  --muted: #858894;
+  --muted-soft: #5c5f6b;
+  --accent: #55e6ce;
+  --accent-bright: #7ef0dc;
+  --accent-dim: rgba(85, 230, 206, 0.14);
+  --accent-glow: rgba(85, 230, 206, 0.28);
+  --border: #252830;
+  --border-strong: #323846;
+  --surface: #111318;
+  --surface-hover: #171a21;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-elevated: var(--background-elevated);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-accent: var(--accent);
+  --color-accent-bright: var(--accent-bright);
+  --color-accent-dim: var(--accent-dim);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --font-display: var(--font-syne), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--foreground);
+}
+
+/* Recharts tooltip reset */
+.recharts-default-tooltip {
+  border: none !important;
+}
