@@ -1,23 +1,19 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
-import { UpcomingInterviews } from "@/components/dashboard/UpcomingInterviews";
-import { PlaceholderPage } from "@/components/dashboard/PlaceholderPage";
+import { Suspense } from "react";
+import { InterviewPrepPage } from "@/components/dashboard/interview-prep/InterviewPrepPage";
 
 export default function InterviewsPage() {
   return (
-    <div className="space-y-5">
-      <UpcomingInterviews />
-      <PlaceholderPage
-        title="Interview calendar"
-        description="This section showcases the interview planning surface for CareerOS. Upcoming sessions above are demo data you can expand into a full calendar later."
-        icon={CalendarDays}
-        highlights={[
-          "Round-level prep notes can attach to each interview.",
-          "Format and timing are already modeled in the data layer.",
-          "Empty states are ready when no interviews are scheduled.",
-        ]}
-      />
-    </div>
+    <Suspense
+      fallback={
+        <div className="animate-pulse space-y-4">
+          <div className="h-24 rounded-2xl border border-border bg-surface/50" />
+          <div className="h-48 rounded-2xl border border-border bg-surface/50" />
+        </div>
+      }
+    >
+      <InterviewPrepPage />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarDays, MapPin, Video } from "lucide-react";
+import { CalendarDays, MapPin, Mic2, Video } from "lucide-react";
 import Link from "next/link";
 import { upcomingInterviews } from "@/data/mock";
 import { formatDateTime } from "@/lib/utils";
@@ -27,7 +27,7 @@ export function UpcomingInterviews() {
           href="/dashboard/interviews"
           className="group inline-flex items-center gap-1 text-xs tracking-[0.12em] text-accent uppercase"
         >
-          View calendar
+          Open prep
           <span className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
             ↗
           </span>
@@ -72,6 +72,13 @@ export function UpcomingInterviews() {
                       {interview.round} · {interview.format}
                     </span>
                   </div>
+                  <Link
+                    href={`/dashboard/interviews?role=${encodeURIComponent(interview.role)}&company=${encodeURIComponent(interview.company)}`}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs text-accent-bright hover:underline"
+                  >
+                    <Mic2 className="h-3.5 w-3.5" />
+                    Prepare for Interview
+                  </Link>
                 </div>
               </div>
             </li>

@@ -1,18 +1,5 @@
-"use client";
-
-import { BarChart3 } from "lucide-react";
-import { ActivityChart } from "@/components/dashboard/ActivityChart";
-import { PlaceholderPage } from "@/components/dashboard/PlaceholderPage";
+import { CareerAnalyticsPage } from "@/components/dashboard/career-analytics/CareerAnalyticsPage";
 
 export default function AnalyticsPage() {
-  return (
-    <div className="space-y-5">
-      <ActivityChart />
-      <PlaceholderPage
-        title="Deeper analytics"
-        description="Extended cohort and funnel analytics can live here. The activity chart above reuses the same visualization language as Overview."
-        icon={BarChart3}
-      />
-    </div>
-  );
+  return <CareerAnalyticsPage />;
 }

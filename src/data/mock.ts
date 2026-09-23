@@ -365,14 +365,26 @@ const seedApps: SeedApp[] = [
   },
 ];
 
+function isoDaysFrom(base: string, offsetDays: number) {
+  const date = new Date(`${base}T12:00:00`);
+  date.setDate(date.getDate() + offsetDays);
+  return date.toISOString().slice(0, 10);
+}
+
+/** Anchor demo data near the portfolio "today" so analytics ranges stay populated. */
+const DEMO_TODAY = "2026-09-23";
+
 export const initialApplications: Application[] = seedApps.map((app, index) => {
   const workMode = app.workMode ?? inferWorkMode(app.location);
+  const daysAgo = Math.round((index / Math.max(1, seedApps.length - 1)) * 80);
+  const dateApplied = isoDaysFrom(DEMO_TODAY, -daysAgo);
+  const updatedAt = isoDaysFrom(DEMO_TODAY, -Math.max(0, daysAgo - 3));
   return {
     id: `app-${index + 1}`,
     company: app.company,
     role: app.role,
     location: app.location,
-    dateApplied: app.dateApplied,
+    dateApplied,
     status: app.status,
     matchScore: app.matchScore,
     notes: app.notes,
@@ -383,8 +395,10 @@ export const initialApplications: Application[] = seedApps.map((app, index) => {
     employmentType: app.employmentType ?? "Full-time",
     priority: app.priority ?? "Medium",
     resumeUsed: app.resumeUsed ?? "CareerOS Resume.pdf",
-    followUpDate: app.followUpDate,
-    updatedAt: app.dateApplied,
+    followUpDate: app.followUpDate
+      ? isoDaysFrom(DEMO_TODAY, -Math.max(0, daysAgo - 7))
+      : undefined,
+    updatedAt,
     tags: [],
     timeline: defaultTimeline(app.status),
   };
@@ -397,7 +411,7 @@ export const upcomingInterviews: Interview[] = [
     company: "Northwind Labs",
     role: "Product Designer",
     round: "Portfolio review",
-    dateTime: "2026-03-24T15:00:00",
+    dateTime: "2026-09-25T15:00:00",
     format: "Video",
   },
   {
@@ -406,7 +420,7 @@ export const upcomingInterviews: Interview[] = [
     company: "Vertex Cloud",
     role: "Frontend Engineer",
     round: "System design",
-    dateTime: "2026-03-26T11:30:00",
+    dateTime: "2026-09-27T11:30:00",
     format: "Video",
   },
   {
@@ -415,7 +429,7 @@ export const upcomingInterviews: Interview[] = [
     company: "Cascade AI",
     role: "UX Researcher",
     round: "Recruiter screen",
-    dateTime: "2026-03-28T09:00:00",
+    dateTime: "2026-09-29T10:00:00",
     format: "Phone",
   },
 ];

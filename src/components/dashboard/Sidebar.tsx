@@ -5,6 +5,7 @@ import {
   BarChart3,
   Briefcase,
   CalendarDays,
+  Compass,
   FileText,
   LayoutDashboard,
   Menu,
@@ -15,15 +16,22 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DEMO_USER } from "@/data/mock";
+import { useSyncExternalStore } from "react";
+import {
+  getProfileServerSnapshot,
+  getProfileSnapshot,
+  subscribeProfile,
+} from "@/lib/profile-settings-store";
+import { initialsFromName } from "@/lib/profile-settings";
 import { cn } from "@/lib/utils";
 
 const mainNav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/discover", label: "Discover", icon: Compass },
   { href: "/dashboard/applications", label: "Applications", icon: Briefcase },
-  { href: "/dashboard/interviews", label: "Interviews", icon: CalendarDays },
+  { href: "/dashboard/interviews", label: "Interview Prep", icon: CalendarDays },
   { href: "/dashboard/ai-insights", label: "AI Insights", icon: Sparkles },
-  { href: "/dashboard/resume-studio", label: "Resume Studio", icon: FileText },
+  { href: "/dashboard/resume-studio", label: "Resume Analyzer", icon: FileText },
   { href: "/dashboard/skills", label: "Skills & Growth", icon: TrendingUp },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
 ];
@@ -36,7 +44,12 @@ type SidebarProps = {
 
 function NavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-
+  const profile = useSyncExternalStore(
+    subscribeProfile,
+    getProfileSnapshot,
+    getProfileServerSnapshot,
+  );
+  const initials = initialsFromName(profile.fullName);
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 px-5 pt-6 pb-7">
@@ -110,14 +123,14 @@ function NavContent({ onNavigate }: { onNavigate?: () => void }) {
 
         <div className="flex items-center gap-3 rounded-xl border border-border bg-surface/60 px-3 py-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
-            {DEMO_USER.initials}
+            {initials}
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">
-              {DEMO_USER.fullName}
+              {profile.fullName}
             </p>
             <p className="truncate text-[11px] text-muted">
-              {DEMO_USER.workspace}
+              {profile.currentRole || profile.headline}
             </p>
           </div>
         </div>

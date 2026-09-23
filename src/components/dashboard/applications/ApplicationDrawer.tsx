@@ -1,7 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, ExternalLink, X } from "lucide-react";
+import { CalendarPlus, ExternalLink, Mic2, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { StatusBadge } from "../StatusBadge";
 import { useDashboard } from "../DashboardProvider";
@@ -292,7 +293,7 @@ function DrawerBody({
         </section>
       </div>
 
-      <footer className="flex items-center justify-between gap-3 border-t border-border px-5 py-4 sm:px-6">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 sm:px-6">
         <button
           type="button"
           onClick={() => {
@@ -303,13 +304,23 @@ function DrawerBody({
         >
           Delete
         </button>
-        <button
-          type="button"
-          onClick={() => onEdit(application)}
-          className="rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-border-strong"
-        >
-          Edit application
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/dashboard/interviews?role=${encodeURIComponent(application.role)}&company=${encodeURIComponent(application.company)}&jd=${encodeURIComponent(application.notes ?? "")}`}
+            onClick={onClose}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-border-strong hover:text-foreground"
+          >
+            <Mic2 className="h-3.5 w-3.5" />
+            Prepare for Interview
+          </Link>
+          <button
+            type="button"
+            onClick={() => onEdit(application)}
+            className="rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-border-strong"
+          >
+            Edit application
+          </button>
+        </div>
       </footer>
     </>
   );

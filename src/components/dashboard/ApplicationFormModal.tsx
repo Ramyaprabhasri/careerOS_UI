@@ -40,6 +40,9 @@ type ApplicationFormModalProps = {
   onClose: () => void;
   initialStatus?: ApplicationStatus;
   application?: Application | null;
+  /** Prefill values when creating a new application (e.g. from Job Discovery). */
+  defaults?: Partial<ApplicationInput> | null;
+  onCreated?: () => void;
 };
 
 export function ApplicationFormModal({
@@ -47,10 +50,13 @@ export function ApplicationFormModal({
   onClose,
   initialStatus = "Applied",
   application = null,
+  defaults = null,
+  onCreated,
 }: ApplicationFormModalProps) {
   const { addApplication, updateApplication } = useDashboard();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const editing = Boolean(application);
+  const seed = application ?? defaults;
 
   const handleClose = () => {
     setErrors({});
@@ -79,6 +85,7 @@ export function ApplicationFormModal({
       resumeUsed: String(form.get("resumeUsed") ?? "").trim() || undefined,
       notes: String(form.get("notes") ?? "").trim() || undefined,
       matchScore: Number(form.get("matchScore") ?? 80),
+      source: defaults?.source ?? application?.source,
     };
 
     const nextErrors: Record<string, string> = {};
@@ -93,11 +100,18 @@ export function ApplicationFormModal({
       updateApplication(application.id, payload);
     } else {
       addApplication(payload);
+      onCreated?.();
     }
 
     event.currentTarget.reset();
     handleClose();
   };
+
+  const formKey =
+    application?.id ??
+    (defaults
+      ? `prefill-${defaults.company}-${defaults.role}-${defaults.jobUrl ?? ""}`
+      : "new-application");
 
   return (
     <Modal
@@ -107,12 +121,14 @@ export function ApplicationFormModal({
       description={
         editing
           ? "Update the details for this opportunity."
-          : "Track a new opportunity on your CareerOS board."
+          : defaults
+            ? "Review the prefilled demo job details, choose a status, then add it to your board."
+            : "Track a new opportunity on your CareerOS board."
       }
       wide
     >
       <form
-        key={application?.id ?? "new-application"}
+        key={formKey}
         onSubmit={handleSubmit}
         className="space-y-4"
         noValidate
@@ -122,14 +138,14 @@ export function ApplicationFormModal({
             label="Company"
             name="company"
             placeholder="Stripe"
-            defaultValue={application?.company}
+            defaultValue={seed?.company}
             error={errors.company}
           />
           <Field
             label="Job title"
             name="role"
             placeholder="Frontend Engineer"
-            defaultValue={application?.role}
+            defaultValue={seed?.role}
             error={errors.role}
           />
         </div>
@@ -138,7 +154,7 @@ export function ApplicationFormModal({
           label="Job URL"
           name="jobUrl"
           placeholder="https://"
-          defaultValue={application?.jobUrl}
+          defaultValue={seed?.jobUrl}
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -146,13 +162,13 @@ export function ApplicationFormModal({
             label="Location"
             name="location"
             placeholder="Bengaluru"
-            defaultValue={application?.location}
+            defaultValue={seed?.location}
             error={errors.location}
           />
           <SelectField
             label="Work mode"
             name="workMode"
-            defaultValue={application?.workMode ?? "Remote"}
+            defaultValue={seed?.workMode ?? "Remote"}
             options={workModes}
           />
         </div>
@@ -161,14 +177,14 @@ export function ApplicationFormModal({
           <SelectField
             label="Employment type"
             name="employmentType"
-            defaultValue={application?.employmentType ?? "Full-time"}
+            defaultValue={seed?.employmentType ?? "Full-time"}
             options={employmentTypes}
           />
           <Field
             label="Salary range"
             name="salaryRange"
             placeholder="$120k–$150k"
-            defaultValue={application?.salaryRange}
+            defaultValue={seed?.salaryRange}
           />
         </div>
 
@@ -178,13 +194,17 @@ export function ApplicationFormModal({
             name="dateApplied"
             type="date"
             defaultValue={
-              application?.dateApplied ?? new Date().toISOString().slice(0, 10)
+              application?.dateApplied ??
+              defaults?.dateApplied ??
+              new Date().toISOString().slice(0, 10)
             }
           />
           <SelectField
             label="Status"
             name="status"
-            defaultValue={application?.status ?? initialStatus}
+            defaultValue={
+              application?.status ?? defaults?.status ?? initialStatus
+            }
             options={statuses.map((status) => ({
               value: status,
               label: status === "Saved" ? "Wishlist" : status,
@@ -193,7 +213,7 @@ export function ApplicationFormModal({
           <SelectField
             label="Priority"
             name="priority"
-            defaultValue={application?.priority ?? "Medium"}
+            defaultValue={seed?.priority ?? "Medium"}
             options={priorities}
           />
         </div>
@@ -203,7 +223,7 @@ export function ApplicationFormModal({
             label="Resume used"
             name="resumeUsed"
             placeholder="Frontend Engineer — Core.pdf"
-            defaultValue={application?.resumeUsed}
+            defaultValue={seed?.resumeUsed}
           />
           <Field
             label="Match score"
@@ -211,7 +231,7 @@ export function ApplicationFormModal({
             type="number"
             min={0}
             max={100}
-            defaultValue={application?.matchScore ?? 80}
+            defaultValue={seed?.matchScore ?? 80}
           />
         </div>
 
@@ -222,7 +242,7 @@ export function ApplicationFormModal({
           <textarea
             name="notes"
             rows={3}
-            defaultValue={application?.notes}
+            defaultValue={seed?.notes}
             placeholder="Interview prep, recruiter notes, requirements…"
             className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-soft focus:border-accent/40"
           />

@@ -18,10 +18,15 @@ const meta: Record<
     title: "Applications board",
     description: "Kanban tracking from wishlist to offer.",
   },
+  "/dashboard/discover": {
+    breadcrumb: "Workspace / Discover",
+    title: "Discover Opportunities",
+    description: "Find roles that match your skills and career goals.",
+  },
   "/dashboard/interviews": {
     breadcrumb: "Workspace / Interviews",
-    title: "Interviews",
-    description: "Prepare for conversations that move your career forward.",
+    title: "Interview Preparation",
+    description: "Practice with purpose for the conversations that matter.",
   },
   "/dashboard/ai-insights": {
     breadcrumb: "Workspace / AI Insights",
@@ -29,9 +34,10 @@ const meta: Record<
     description: "Demo guidance patterned on your application activity.",
   },
   "/dashboard/resume-studio": {
-    breadcrumb: "Workspace / Resume Studio",
-    title: "Resume Studio",
-    description: "Shape role-specific narratives for your next application.",
+    breadcrumb: "Workspace / Resume Analyzer",
+    title: "AI Resume Analyzer",
+    description:
+      "Understand your resume and get closer to your next opportunity.",
   },
   "/dashboard/skills": {
     breadcrumb: "Workspace / Skills & Growth",
@@ -40,13 +46,13 @@ const meta: Record<
   },
   "/dashboard/analytics": {
     breadcrumb: "Workspace / Analytics",
-    title: "Analytics",
-    description: "Understand trends across your search activity.",
+    title: "Career Analytics",
+    description: "Turn your job search activity into insights you can act on.",
   },
   "/dashboard/settings": {
     breadcrumb: "Workspace / Settings",
-    title: "Settings",
-    description: "Workspace preferences for this portfolio demo.",
+    title: "Profile & Settings",
+    description: "Manage your profile, preferences, and CareerOS workspace.",
   },
 };
 

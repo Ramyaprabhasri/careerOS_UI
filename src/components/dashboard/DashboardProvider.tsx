@@ -90,9 +90,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setApplications((current) => [next, ...current]);
       pushToast({
         title: "Application added",
-        description: `${input.role} at ${input.company}`,
-      });
-    },
+        description: `${input.role} at ${input.company}. Open Applications to track it.`,
+      });    },
     [pushToast],
   );
 

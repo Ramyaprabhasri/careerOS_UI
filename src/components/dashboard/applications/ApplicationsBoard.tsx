@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ApplicationDrawer } from "./ApplicationDrawer";
 import { ApplicationsTable, DEFAULT_COLUMNS } from "./ApplicationsTable";
 import { KanbanBoard } from "./KanbanBoard";
@@ -95,14 +96,36 @@ const PRESET_VIEWS: SavedTableView[] = [
 ];
 
 export function ApplicationsBoard() {
+  const searchParams = useSearchParams();
   const { applications, updateApplicationStatus, deleteApplication } =
     useDashboard();
+
+  const statusParam = searchParams.get("status");
+  const initialStatus =
+    statusParam &&
+    ["Saved", "Applied", "Screening", "Interview", "Offer", "Rejected"].includes(
+      statusParam,
+    )
+      ? (statusParam as ApplicationStatus)
+      : "All";
+
+  const [filters, setFilters] = useState<Filters>({
+    ...defaultFilters,
+    status: initialStatus,
+  });
+  const [statusQueryKey, setStatusQueryKey] = useState(statusParam ?? "");
+  if ((statusParam ?? "") !== statusQueryKey) {
+    setStatusQueryKey(statusParam ?? "");
+    setFilters((current) => ({
+      ...current,
+      status: initialStatus,
+    }));
+  }
 
   const [view, setView] = useState<BoardView>("board");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ApplicationSort>("date-desc");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [selected, setSelected] = useState<Application | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formStatus, setFormStatus] = useState<ApplicationStatus>("Applied");

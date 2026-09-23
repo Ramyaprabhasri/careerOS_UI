@@ -1,5 +1,6 @@
 import { Syne, DM_Sans } from "next/font/google";
 import type { Metadata } from "next";
+import { ThemeInit } from "@/components/ThemeInit";
 import "./globals.css";
 
 const syne = Syne({
@@ -28,8 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
+    <html
+      lang="en"
+      data-theme="dark"
+      className={`${syne.variable} ${dmSans.variable}`}
+    >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        <ThemeInit />
         {children}
       </body>
     </html>
