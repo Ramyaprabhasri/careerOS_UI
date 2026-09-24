@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import { useDashboard } from "@/components/dashboard/DashboardProvider";
 import { AccountSection } from "@/components/dashboard/settings/AccountSection";
+import { logout } from "@/lib/auth/actions";
 import { AiPreferencesSection } from "@/components/dashboard/settings/AiPreferencesSection";
 import { AppearanceSection } from "@/components/dashboard/settings/AppearanceSection";
 import { CareerPreferencesSection } from "@/components/dashboard/settings/CareerPreferencesSection";
@@ -147,12 +148,9 @@ export function SettingsPage() {
                   description: "Simulated for this demo workspace.",
                 })
               }
-              onSignOut={() =>
-                pushToast({
-                  title: "Signed out",
-                  description: "Demo session ended. Local data remains.",
-                })
-              }
+              onSignOut={() => {
+                void logout();
+              }}
               onDeleteAccount={() => {
                 clearLocalProfileData();
                 setThemePreference("dark");

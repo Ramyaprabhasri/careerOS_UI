@@ -36,7 +36,7 @@ export function AccountSection({
     <div className="space-y-5">
       <SectionShell
         title="Account"
-        description="Demo account controls. Authentication is not connected in this portfolio build."
+        description="Manage your CareerOS account session."
       >
         <div className="space-y-4">
           <Field label="Email" value={profile.email} readOnly />
@@ -162,7 +162,7 @@ export function AccountSection({
         open={signOutOpen}
         onClose={() => setSignOutOpen(false)}
         title="Sign out?"
-        description="This demo will reset your session toast only. Data stays in localStorage."
+        description="You will be signed out and returned to the login page."
       >
         <div className="flex justify-end gap-2">
           <button
