@@ -33,6 +33,11 @@ import {
   subscribeViewedJobs,
   toggleSavedJob,
 } from "@/lib/job-discovery-store";
+import {
+  getProfileServerSnapshot,
+  getProfileSnapshot,
+  subscribeProfile,
+} from "@/lib/profile-settings-store";
 import type { ApplicationInput } from "@/types/dashboard";
 import type { DemoJob, JobDiscoveryView, JobFilters } from "@/types/job-discovery";
 
@@ -48,6 +53,11 @@ export function JobDiscoveryPage() {
     subscribeViewedJobs,
     getViewedJobsSnapshot,
     getViewedJobsServerSnapshot,
+  );
+  const profile = useSyncExternalStore(
+    subscribeProfile,
+    getProfileSnapshot,
+    getProfileServerSnapshot,
   );
 
   const [view, setView] = useState<JobDiscoveryView>("search");
@@ -66,7 +76,35 @@ export function JobDiscoveryPage() {
   }, []);
 
   const results = filterAndSortJobs(DEMO_JOBS, deferredFilters);
-  const recommended = getRecommendedJobs(6);
+  const prefs = profile.careerPreferences;
+  const recommended = [...getRecommendedJobs(12)]
+    .sort((a, b) => {
+      const score = (job: DemoJob) => {
+        let value = job.match.score;
+        if (
+          prefs.preferredRoles.some(
+            (role) =>
+              job.title.toLowerCase().includes(role.toLowerCase()) ||
+              job.categories.some((category) =>
+                category.toLowerCase().includes(role.toLowerCase()),
+              ),
+          )
+        ) {
+          value += 6;
+        }
+        if (prefs.workModes.includes(job.workMode)) value += 3;
+        if (
+          prefs.preferredLocations.some((location) =>
+            job.location.toLowerCase().includes(location.toLowerCase()),
+          )
+        ) {
+          value += 2;
+        }
+        return value;
+      };
+      return score(b) - score(a);
+    })
+    .slice(0, 6);
   const savedJobs = mergeSavedJobs(savedRecords, DEMO_JOBS).map((job) => {
     const duplicate = findDuplicateApplication(applications, {
       company: job.company,
