@@ -36,6 +36,14 @@ enum Priority {
   High
 }
 
+enum ExperienceLevel {
+  Internship
+  Entry
+  Mid
+  Senior
+  Lead
+}
+
 model User {
   id        String   @id @db.Uuid // = auth.users.id
   email     String   @unique
@@ -44,6 +52,7 @@ model User {
 
   profile      Profile?
   applications Application[]
+  savedJobs    SavedJob[]
 }
 
 model Profile {
@@ -111,4 +120,48 @@ model ApplicationTimelineEvent {
   sortOrder Int       @default(0)
 
   @@index([applicationId])
+}
+
+model Job {
+  id              String          @id @default(cuid())
+  title           String
+  company         String
+  location        String
+  description     String
+  salaryRange     String?
+  workMode        WorkMode
+  employmentType  EmploymentType
+  experienceLevel ExperienceLevel
+  experienceLabel String
+  source          String
+  jobUrl          String
+  postedAt        DateTime        @db.Date
+  skills          String[]
+  categories      String[]
+  /// Deterministic baseline score used when profile context is thin.
+  baseMatchScore  Int             @default(70)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  savedBy SavedJob[]
+
+  @@index([postedAt])
+  @@index([workMode])
+  @@index([employmentType])
+  @@index([experienceLevel])
+  @@index([company])
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  jobId     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
 }

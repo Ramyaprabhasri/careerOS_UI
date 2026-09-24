@@ -17,6 +17,12 @@ import {
 } from "@/components/dashboard/job-discovery/SavedJobsPanel";
 import { DEMO_JOBS } from "@/data/job-listings";
 import {
+  getJobs,
+  getSavedJobs,
+  saveJob,
+  unsaveJob,
+} from "@/lib/api/client";
+import {
   DEFAULT_JOB_FILTERS,
   filterAndSortJobs,
   findDuplicateApplication,
@@ -29,6 +35,7 @@ import {
   getViewedJobsSnapshot,
   markJobViewed,
   removeSavedJob,
+  setSavedJobs,
   subscribeSavedJobs,
   subscribeViewedJobs,
   toggleSavedJob,
@@ -41,8 +48,13 @@ import {
 import type { ApplicationInput } from "@/types/dashboard";
 import type { DemoJob, JobDiscoveryView, JobFilters } from "@/types/job-discovery";
 
+function useMockJobs() {
+  return process.env.NEXT_PUBLIC_USE_MOCK_JOBS === "true";
+}
+
 export function JobDiscoveryPage() {
   const router = useRouter();
+  const useMock = useMockJobs();
   const { applications, pushToast } = useDashboard();
   const savedRecords = useSyncExternalStore(
     subscribeSavedJobs,
@@ -67,17 +79,60 @@ export function JobDiscoveryPage() {
   const [prefill, setPrefill] = useState<Partial<ApplicationInput> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<DemoJob[]>(() => (useMock ? DEMO_JOBS : []));
+  const [loadError, setLoadError] = useState(false);
 
   const deferredFilters = useDeferredValue(filters);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 450);
-    return () => window.clearTimeout(timer);
-  }, []);
+    if (useMock) {
+      const timer = window.setTimeout(() => setLoading(false), 450);
+      return () => window.clearTimeout(timer);
+    }
 
-  const results = filterAndSortJobs(DEMO_JOBS, deferredFilters);
+    let cancelled = false;
+
+    void (async () => {
+      setLoading(true);
+      setLoadError(false);
+      try {
+        const [jobsResponse, savedResponse] = await Promise.all([
+          getJobs({ limit: 100, sort: "relevance" }),
+          getSavedJobs(),
+        ]);
+        if (cancelled) return;
+        setJobs(jobsResponse.data);
+        setSavedJobs(
+          savedResponse.data.map((job) => ({
+            jobId: job.id,
+            savedAt: new Date().toISOString().slice(0, 10),
+          })),
+        );
+      } catch {
+        if (!cancelled) {
+          setLoadError(true);
+          pushToast({
+            title: "Couldn't load jobs",
+            description: "Refresh the page to try again.",
+          });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [useMock, pushToast]);
+
+  const catalog = useMock ? DEMO_JOBS : jobs;
+  const results = filterAndSortJobs(catalog, deferredFilters);
   const prefs = profile.careerPreferences;
-  const recommended = [...getRecommendedJobs(12)]
+  const recommendedBase = useMock
+    ? getRecommendedJobs(12)
+    : [...catalog].sort((a, b) => b.match.score - a.match.score).slice(0, 12);
+  const recommended = [...recommendedBase]
     .sort((a, b) => {
       const score = (job: DemoJob) => {
         let value = job.match.score;
@@ -105,7 +160,7 @@ export function JobDiscoveryPage() {
       return score(b) - score(a);
     })
     .slice(0, 6);
-  const savedJobs = mergeSavedJobs(savedRecords, DEMO_JOBS).map((job) => {
+  const savedJobs = mergeSavedJobs(savedRecords, catalog).map((job) => {
     const duplicate = findDuplicateApplication(applications, {
       company: job.company,
       title: job.title,
@@ -117,7 +172,7 @@ export function JobDiscoveryPage() {
     };
   });
   const recentlyViewed = viewedIds
-    .map((id) => DEMO_JOBS.find((job) => job.id === id))
+    .map((id) => catalog.find((job) => job.id === id))
     .filter((job): job is DemoJob => Boolean(job))
     .slice(0, 6);
 
@@ -129,11 +184,43 @@ export function JobDiscoveryPage() {
   };
 
   const handleToggleSave = (job: DemoJob) => {
-    const saved = toggleSavedJob(job.id);
-    pushToast({
-      title: saved ? "Job saved" : "Removed from saved",
-      description: `${job.title} at ${job.company}`,
-    });
+    if (useMock) {
+      const saved = toggleSavedJob(job.id);
+      pushToast({
+        title: saved ? "Job saved" : "Removed from saved",
+        description: `${job.title} at ${job.company}`,
+      });
+      return;
+    }
+
+    const currentlySaved = savedSet.has(job.id);
+    void (async () => {
+      try {
+        if (currentlySaved) {
+          await unsaveJob(job.id);
+          removeSavedJob(job.id);
+          pushToast({
+            title: "Removed from saved",
+            description: `${job.title} at ${job.company}`,
+          });
+        } else {
+          const { data } = await saveJob(job.id);
+          setSavedJobs([
+            { jobId: job.id, savedAt: data.savedAt },
+            ...getSavedJobsSnapshot().filter((record) => record.jobId !== job.id),
+          ]);
+          pushToast({
+            title: "Job saved",
+            description: `${job.title} at ${job.company}`,
+          });
+        }
+      } catch {
+        pushToast({
+          title: "Couldn't update saved jobs",
+          description: "Try again.",
+        });
+      }
+    })();
   };
 
   const handleAddToApplications = (job: DemoJob) => {
@@ -159,8 +246,8 @@ export function JobDiscoveryPage() {
       employmentType: job.employmentType,
       salaryRange: job.salaryRange,
       matchScore: job.match.score,
-      source: "Job Discovery (demo)",
-      notes: `Demo match insight: ${job.match.summary}`,
+      source: useMock ? "Job Discovery (demo)" : "Job Discovery",
+      notes: `${useMock ? "Demo" : "Deterministic"} match insight: ${job.match.summary}`,
       status: "Saved",
       priority: "Medium",
     });
@@ -168,13 +255,14 @@ export function JobDiscoveryPage() {
   };
 
   const similarJobs = selectedJob
-    ? DEMO_JOBS.filter(
-        (job) =>
-          job.id !== selectedJob.id &&
-          job.categories.some((category) =>
-            selectedJob.categories.includes(category),
-          ),
-      )
+    ? catalog
+        .filter(
+          (job) =>
+            job.id !== selectedJob.id &&
+            job.categories.some((category) =>
+              selectedJob.categories.includes(category),
+            ),
+        )
         .sort((a, b) => b.match.score - a.match.score)
         .slice(0, 3)
     : [];
@@ -214,7 +302,6 @@ export function JobDiscoveryPage() {
             filters={draftFilters}
             onChange={(next) => {
               setDraftFilters(next);
-              // Live-update category/sort/filters for snappy UX
               setFilters(next);
             }}
             onSearch={applySearch}
@@ -243,8 +330,9 @@ export function JobDiscoveryPage() {
               Matched to Your Profile
             </h3>
             <p className="mt-1 text-sm text-muted">
-              Opportunities aligned with your resume and skills. Scores are
-              simulated demo insights — not live AI matching.
+              {useMock
+                ? "Opportunities aligned with your resume and skills. Scores are simulated demo insights — not live AI matching."
+                : "Opportunities ranked with a deterministic skill/location fit score — not live AI matching."}
             </p>
           </div>
           {loading ? (
@@ -275,13 +363,24 @@ export function JobDiscoveryPage() {
                   : "Search results"}
               </h3>
               <p className="mt-1 text-sm text-muted">
-                Demo listings only — not live employer postings.
+                {useMock
+                  ? "Demo listings only — not live employer postings."
+                  : "Sample development listings from your CareerOS database."}
               </p>
             </div>
           </div>
 
           {loading ? (
             <JobGridSkeleton />
+          ) : loadError ? (
+            <div className="rounded-2xl border border-dashed border-border bg-surface/40 px-6 py-14 text-center">
+              <p className="font-display text-xl font-semibold text-foreground">
+                Couldn&apos;t load opportunities
+              </p>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+                Check your connection and refresh the page.
+              </p>
+            </div>
           ) : results.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-surface/40 px-6 py-14 text-center">
               <p className="font-display text-xl font-semibold text-foreground">
@@ -322,11 +421,29 @@ export function JobDiscoveryPage() {
           jobs={savedJobs}
           onView={openJob}
           onRemove={(jobId) => {
-            removeSavedJob(jobId);
-            pushToast({
-              title: "Removed from saved",
-              description: "You can save it again anytime from discovery.",
-            });
+            if (useMock) {
+              removeSavedJob(jobId);
+              pushToast({
+                title: "Removed from saved",
+                description: "You can save it again anytime from discovery.",
+              });
+              return;
+            }
+            void (async () => {
+              try {
+                await unsaveJob(jobId);
+                removeSavedJob(jobId);
+                pushToast({
+                  title: "Removed from saved",
+                  description: "You can save it again anytime from discovery.",
+                });
+              } catch {
+                pushToast({
+                  title: "Couldn't remove saved job",
+                  description: "Try again.",
+                });
+              }
+            })();
           }}
           onMoveToApplications={handleAddToApplications}
           onExplore={() => setView("search")}
@@ -371,7 +488,8 @@ export function JobDiscoveryPage() {
           Applications
         </Link>{" "}
         to track progress on the board and table.
-      </p>    </div>
+      </p>
+    </div>
   );
 }
 

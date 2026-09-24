@@ -58,9 +58,12 @@ export type DemoJob = {
   description: string;
   source: string;
   jobUrl: string;
-  /** Simulated demo match — not a live AI prediction */
+  /** Match insight — deterministic backend score or demo fixture */
   match: JobMatchInsight;
-  isDemo: true;
+  /** True for local mock fixtures; omitted/false for API jobs */
+  isDemo?: boolean;
+  /** Present when listing includes the viewer's saved state */
+  saved?: boolean;
 };
 
 export type SavedJobRecord = {

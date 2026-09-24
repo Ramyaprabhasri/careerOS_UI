@@ -3,6 +3,7 @@ import type {
   ApplicationInput,
   ApplicationStatus,
 } from "@/types/dashboard";
+import type { DemoJob, JobFilters } from "@/types/job-discovery";
 
 export type ApiErrorBody = {
   error: {
@@ -32,6 +33,16 @@ export class ApiClientError extends Error {
 }
 
 type DataResponse<T> = { data: T };
+
+type JobsListResponse = {
+  data: DemoJob[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
 async function request<T>(
   path: string,
@@ -107,6 +118,58 @@ export async function updateApplication(
 
 export async function deleteApplication(id: string) {
   return request<DataResponse<{ id: string }>>(`/api/applications/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getJobs(
+  params?: Partial<JobFilters> & { page?: number; limit?: number },
+) {
+  const search = new URLSearchParams();
+  if (params?.query) search.set("q", params.query);
+  if (params?.location) search.set("location", params.location);
+  if (params?.workMode && params.workMode !== "All") {
+    search.set("workMode", params.workMode);
+  }
+  if (params?.employmentType && params.employmentType !== "All") {
+    search.set("employmentType", params.employmentType);
+  }
+  if (params?.experienceLevel && params.experienceLevel !== "All") {
+    search.set("experienceLevel", params.experienceLevel);
+  }
+  if (params?.category && params.category !== "All") {
+    search.set("category", params.category);
+  }
+  if (params?.salaryMin != null) {
+    search.set("salaryMin", String(params.salaryMin));
+  }
+  if (params?.datePosted && params.datePosted !== "any") {
+    search.set("datePosted", params.datePosted);
+  }
+  if (params?.sort) search.set("sort", params.sort);
+  if (params?.page) search.set("page", String(params.page));
+  if (params?.limit) search.set("limit", String(params.limit));
+  const query = search.toString();
+  return request<JobsListResponse>(`/api/jobs${query ? `?${query}` : ""}`);
+}
+
+export async function getJob(id: string) {
+  return request<DataResponse<DemoJob>>(`/api/jobs/${id}`);
+}
+
+export async function getSavedJobs() {
+  return request<DataResponse<DemoJob[]>>("/api/jobs/saved");
+}
+
+export async function saveJob(id: string) {
+  return request<DataResponse<{ saved: true; savedAt: string }>>(
+    `/api/jobs/${id}/save`,
+    { method: "POST" },
+  );
+}
+
+export async function unsaveJob(id: string) {
+  return request<DataResponse<{ saved: false }>>(`/api/jobs/${id}/save`, {
     method: "DELETE",
   });
 }
